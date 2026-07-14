@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.0/dist/browser-image-compression.min.js"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -383,18 +385,6 @@
             padding-top: 20px;
         }
 
-        /* Edge overlay for BG Remover */
-        .edge-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            border-radius: 16px;
-            opacity: 0.6;
-        }
-
         @media (max-width: 600px) {
             .navbar { flex-direction: column; gap: 10px; padding: 14px; }
             .menu { justify-content: center; }
@@ -414,6 +404,8 @@
             border-top: 3px solid #1a5cff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
         }
     </style>
 </head>
@@ -562,7 +554,7 @@
             </div>
         </div>
 
-        <!-- TOOL 5: Background Remover (NEW VERSION - Intelligent Edge Detection) -->
+        <!-- TOOL 5: Background Remover -->
         <div class="tool-card" id="tool5">
             <div class="tool-header">
                 <i class="fas fa-magic"></i>
@@ -593,16 +585,12 @@
                 <div class="status-box" id="status5">🖼️ Waiting for image...</div>
                 <div class="preview-grid" id="previewGrid5" style="display:none;">
                     <div class="preview-box"><h4>Original</h4><img id="origImg5" src="#"><div class="info" id="origInfo5">—</div></div>
-                    <div class="preview-box" style="position:relative;">
-                        <h4>Without Background</h4>
-                        <canvas id="resultCanvas5" style="max-width:100%; max-height:120px; border-radius:10px; background: #eef2f8;"></canvas>
-                        <div class="info" id="resultInfo5">—</div>
-                    </div>
+                    <div class="preview-box"><h4>Without BG</h4><canvas id="resultCanvas5" style="max-width:100%; max-height:120px; border-radius:10px; background:#eef2f8;"></canvas><div class="info" id="resultInfo5">—</div></div>
                 </div>
             </div>
         </div>
 
-        <!-- TOOL 6: PDF to Images -->
+        <!-- TOOL 6: PDF to Images (UPDATED VERSION) -->
         <div class="tool-card" id="tool6">
             <div class="tool-header">
                 <i class="fas fa-images"></i>
@@ -618,11 +606,23 @@
                     </svg>
                     <p>Drop PDF or <span class="highlight" id="browse6">browse</span></p>
                     <input type="file" id="fileInput6" accept=".pdf" style="display:none;">
+                    <div style="font-size:0.7rem; color:#6f8bb0;">.pdf files only</div>
                 </div>
                 <div class="file-list" id="fileList6">📎 No PDF selected</div>
+                <div class="settings-row">
+                    <label>Scale <input type="range" id="scaleSlider6" min="0.5" max="3" step="0.1" value="1.5"> <span class="val" id="scaleVal6">1.5x</span></label>
+                    <label>Format <select id="imageFormat6" style="border-radius:30px; border:1px solid #b9ceec; padding:3px 10px; background:white;">
+                        <option value="png">PNG</option>
+                        <option value="jpeg">JPEG</option>
+                        <option value="webp">WebP</option>
+                    </select></label>
+                </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" id="convertBtn6" disabled><i class="fas fa-file-pdf"></i> Convert + ZIP</button>
                     <button class="btn btn-outline" id="clearBtn6"><i class="fas fa-trash-alt"></i> Clear</button>
+                </div>
+                <div class="progress-container" id="progressContainer6">
+                    <div class="progress-bar" id="progressBar6"></div>
                 </div>
                 <div class="status-box" id="status6">⏳ Waiting for PDF...</div>
             </div>
@@ -1112,7 +1112,7 @@
             status.innerHTML = '📁 Select audio, then Process.';
         })();
 
-        // ========== TOOL 5: Background Remover (NEW VERSION - Intelligent Edge Detection) ==========
+        // ========== TOOL 5: Background Remover ==========
         (function tool5() {
             const uploadArea = document.getElementById('uploadArea5');
             const fileInput = document.getElementById('fileInput5');
@@ -1187,20 +1187,16 @@
             fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); fileInput.value=''; });
             clearBtn.addEventListener('click', resetTool);
 
-            // ------ Sobel Edge Detection ------
             function detectEdges(imageData, width, height, threshold) {
                 const data = imageData.data;
                 const gray = new Float32Array(width * height);
                 const edges = new Uint8Array(width * height);
-                
                 for (let i = 0; i < width * height; i++) {
                     const idx = i * 4;
                     gray[i] = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
                 }
-                
                 const gx = [-1, 0, 1, -2, 0, 2, -1, 0, 1];
                 const gy = [-1, -2, -1, 0, 0, 0, 1, 2, 1];
-                
                 for (let y = 1; y < height - 1; y++) {
                     for (let x = 1; x < width - 1; x++) {
                         let sumX = 0, sumY = 0;
@@ -1220,93 +1216,51 @@
                 return edges;
             }
 
-            // ------ Intelligent Background Removal ------
             function intelligentBackgroundRemoval(imageData, width, height, edgeThresholdVal) {
                 const data = imageData.data;
                 const result = new Uint8ClampedArray(data);
-                
                 const edges = detectEdges(imageData, width, height, edgeThresholdVal);
-                
                 const visited = new Uint8Array(width * height);
                 const queue = [];
-                
-                const corners = [
-                    [0, 0], [width-1, 0], [0, height-1], [width-1, height-1]
-                ];
-                
+                const corners = [[0,0], [width-1,0], [0,height-1], [width-1,height-1]];
                 for (const [cx, cy] of corners) {
                     const idx = cy * width + cx;
-                    if (!visited[idx] && edges[idx] < 128) {
-                        queue.push([cx, cy]);
-                        visited[idx] = 1;
-                    }
+                    if (!visited[idx] && edges[idx] < 128) { queue.push([cx, cy]); visited[idx] = 1; }
                 }
-                
                 for (let x = 0; x < width; x++) {
                     for (let y of [0, height-1]) {
                         const idx = y * width + x;
-                        if (!visited[idx] && edges[idx] < 128) {
-                            queue.push([x, y]);
-                            visited[idx] = 1;
-                        }
+                        if (!visited[idx] && edges[idx] < 128) { queue.push([x, y]); visited[idx] = 1; }
                     }
                 }
                 for (let y = 0; y < height; y++) {
                     for (let x of [0, width-1]) {
                         const idx = y * width + x;
-                        if (!visited[idx] && edges[idx] < 128) {
-                            queue.push([x, y]);
-                            visited[idx] = 1;
-                        }
+                        if (!visited[idx] && edges[idx] < 128) { queue.push([x, y]); visited[idx] = 1; }
                     }
                 }
-                
                 let head = 0;
                 while (head < queue.length) {
                     const [x, y] = queue[head++];
                     const idx = y * width + x;
-                    
-                    const neighbors = [
-                        [x-1, y], [x+1, y], [x, y-1], [x, y+1]
-                    ];
-                    
+                    const neighbors = [[x-1,y], [x+1,y], [x,y-1], [x,y+1]];
                     for (const [nx, ny] of neighbors) {
                         if (nx < 0 || nx >= width || ny < 0 || ny >= height) continue;
                         const nidx = ny * width + nx;
                         if (!visited[nidx] && edges[nidx] < 128) {
-                            const r1 = result[idx * 4];
-                            const g1 = result[idx * 4 + 1];
-                            const b1 = result[idx * 4 + 2];
-                            const r2 = result[nidx * 4];
-                            const g2 = result[nidx * 4 + 1];
-                            const b2 = result[nidx * 4 + 2];
-                            
-                            const colorDiff = Math.sqrt(
-                                (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2
-                            );
-                            
-                            if (colorDiff < 40) {
-                                visited[nidx] = 1;
-                                queue.push([nx, ny]);
-                            }
+                            const r1 = result[idx*4], g1 = result[idx*4+1], b1 = result[idx*4+2];
+                            const r2 = result[nidx*4], g2 = result[nidx*4+1], b2 = result[nidx*4+2];
+                            const colorDiff = Math.sqrt((r1-r2)**2 + (g1-g2)**2 + (b1-b2)**2);
+                            if (colorDiff < 40) { visited[nidx] = 1; queue.push([nx, ny]); }
                         }
                     }
                 }
-                
                 for (let i = 0; i < width * height; i++) {
-                    if (visited[i] === 1) {
-                        result[i * 4 + 3] = 0;
-                    }
+                    if (visited[i] === 1) { result[i*4+3] = 0; }
                 }
-                
-                return {
-                    data: result,
-                    edges: edges,
-                    mask: visited
-                };
+                return { data: result, edges: edges, mask: visited };
             }
 
-            // ------ Main Remove Function ------
             removeBtn.addEventListener('click', function() {
                 if (!selectedFile) return;
                 const img = new Image();
@@ -1315,87 +1269,59 @@
                 img.onload = function() {
                     progressContainer.style.display = 'block';
                     progressBar.style.width = '5%';
-                    status.innerHTML = '⏳ Analyzing image and detecting edges...';
+                    status.innerHTML = '⏳ Analyzing image...';
                     removeBtn.disabled = true;
                     try {
                         const canvas = document.createElement('canvas');
                         const ctx = canvas.getContext('2d');
-                        
-                        let width = img.width;
-                        let height = img.height;
+                        let width = img.width, height = img.height;
                         const maxSize = 800;
-                        
                         if (width > maxSize || height > maxSize) {
                             const ratio = Math.min(maxSize / width, maxSize / height);
                             width = Math.round(width * ratio);
                             height = Math.round(height * ratio);
                         }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
+                        canvas.width = width; canvas.height = height;
                         ctx.drawImage(img, 0, 0, width, height);
-
                         progressBar.style.width = '20%';
                         status.innerHTML = '⏳ Processing pixels...';
-
                         const imageData = ctx.getImageData(0, 0, width, height);
                         const threshold = parseInt(edgeThreshold.value);
-                        
                         const result = intelligentBackgroundRemoval(imageData, width, height, threshold);
-                        
                         progressBar.style.width = '70%';
                         status.innerHTML = '⏳ Generating output...';
-
                         const outputData = new ImageData(result.data, width, height);
                         ctx.putImageData(outputData, 0, 0);
-                        
-                        // Show edges overlay if enabled
                         if (showEdges.checked) {
                             const edgeCanvas = document.createElement('canvas');
-                            edgeCanvas.width = width;
-                            edgeCanvas.height = height;
+                            edgeCanvas.width = width; edgeCanvas.height = height;
                             const edgeCtx = edgeCanvas.getContext('2d');
                             const edgeImageData = edgeCtx.createImageData(width, height);
                             const edgeData = edgeImageData.data;
-                            
                             for (let i = 0; i < width * height; i++) {
                                 const val = result.edges[i];
-                                edgeData[i * 4] = val;
-                                edgeData[i * 4 + 1] = val;
-                                edgeData[i * 4 + 2] = val;
-                                edgeData[i * 4 + 3] = 200;
+                                edgeData[i*4] = val; edgeData[i*4+1] = val; edgeData[i*4+2] = val;
+                                edgeData[i*4+3] = 200;
                             }
                             edgeCtx.putImageData(edgeImageData, 0, 0);
-                            // Overlay edges on result
                             ctx.drawImage(edgeCanvas, 0, 0);
                         }
-                        
-                        resultCanvas.width = canvas.width;
-                        resultCanvas.height = canvas.height;
+                        resultCanvas.width = canvas.width; resultCanvas.height = canvas.height;
                         const rctx = resultCanvas.getContext('2d');
                         rctx.drawImage(canvas, 0, 0);
                         resultCanvas.style.display = 'block';
-
                         progressBar.style.width = '90%';
-
                         canvas.toBlob(function(blob) {
                             progressBar.style.width = '100%';
-                            status.innerHTML = '✅ Background removed successfully!';
-                            
+                            status.innerHTML = '✅ Background removed!';
                             resultInfo.textContent = 'PNG (' + formatSize(blob.size) + ')';
                             resultBlob = blob;
                             downloadBtn.style.display = 'inline-flex';
                             downloadBtn.disabled = false;
-
-                            setTimeout(() => {
-                                progressContainer.style.display = 'none';
-                            }, 500);
-
+                            setTimeout(() => { progressContainer.style.display = 'none'; }, 500);
                             URL.revokeObjectURL(url);
                         }, 'image/png');
-
                     } catch (error) {
-                        console.error('Error:', error);
                         status.innerHTML = '❌ Error: ' + error.message;
                         progressContainer.style.display = 'none';
                         progressBar.style.width = '0%';
@@ -1423,7 +1349,7 @@
             resetTool();
         })();
 
-        // ========== TOOL 6: PDF to Images ==========
+        // ========== TOOL 6: PDF to Images (UPDATED VERSION) ==========
         (function tool6() {
             const dropZone = document.getElementById('dropZone6');
             const fileInput = document.getElementById('fileInput6');
@@ -1431,12 +1357,37 @@
             const convertBtn = document.getElementById('convertBtn6');
             const clearBtn = document.getElementById('clearBtn6');
             const status = document.getElementById('status6');
+            const progressContainer = document.getElementById('progressContainer6');
+            const progressBar = document.getElementById('progressBar6');
+            const scaleSlider = document.getElementById('scaleSlider6');
+            const scaleVal = document.getElementById('scaleVal6');
+            const imageFormat = document.getElementById('imageFormat6');
+
             let currentFile = null;
+
+            scaleSlider.addEventListener('input', () => { scaleVal.textContent = scaleSlider.value + 'x'; });
+
+            // تنظیم worker PDF.js
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+            function formatSize(bytes) {
+                if (bytes < 1024) return bytes + ' B';
+                if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+                return (bytes / 1048576).toFixed(1) + ' MB';
+            }
 
             function updateUI() {
                 if (currentFile) {
-                    fileList.innerHTML = `<span style="background:#dce6f5; padding:4px 14px; border-radius:40px; display:inline-block;">📄 ${currentFile.name} (${(currentFile.size/1024).toFixed(1)} KB) <button data-remove style="background:transparent; border:none; color:#b91c1c; font-weight:bold; cursor:pointer;">×</button></span>`;
-                    fileList.querySelector('[data-remove]')?.addEventListener('click', (e) => { e.stopPropagation(); clearFile(); });
+                    fileList.innerHTML = `
+                        <span style="background:#dce6f5; padding:4px 14px; border-radius:40px; display:inline-block;">
+                            📄 ${currentFile.name} (${formatSize(currentFile.size)})
+                            <button data-remove style="background:transparent; border:none; color:#b91c1c; font-weight:bold; cursor:pointer;">×</button>
+                        </span>
+                    `;
+                    fileList.querySelector('[data-remove]')?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        clearFile();
+                    });
                     convertBtn.disabled = false;
                     status.innerHTML = `✅ ${currentFile.name} ready.`;
                 } else {
@@ -1445,47 +1396,119 @@
                     status.innerHTML = '⏳ Waiting for PDF...';
                 }
             }
-            function clearFile() { currentFile = null; fileInput.value = ''; updateUI(); }
 
-            function handleFile(file) {
-                if (!file || file.type !== 'application/pdf') { status.innerHTML = '❌ Please select a valid PDF.'; return; }
-                currentFile = file; updateUI();
+            function clearFile() {
+                currentFile = null;
+                fileInput.value = '';
+                progressContainer.style.display = 'none';
+                progressBar.style.width = '0%';
+                updateUI();
             }
 
-            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor='#1a5cff'; });
-            dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor='#b0c8e5'; });
-            dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.style.borderColor='#b0c8e5'; if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+            function handleFile(file) {
+                if (!file || file.type !== 'application/pdf') {
+                    status.innerHTML = '❌ Please select a valid PDF.';
+                    return;
+                }
+                currentFile = file;
+                updateUI();
+            }
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#1a5cff';
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.borderColor = '#b0c8e5';
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = '#b0c8e5';
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
             dropZone.addEventListener('click', () => fileInput.click());
-            document.getElementById('browse6').addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
-            fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); fileInput.value=''; });
+            document.getElementById('browse6').addEventListener('click', (e) => {
+                e.stopPropagation();
+                fileInput.click();
+            });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(fileInput.files[0]);
+                fileInput.value = '';
+            });
             clearBtn.addEventListener('click', clearFile);
 
             convertBtn.addEventListener('click', async function() {
                 if (!currentFile) return;
                 convertBtn.disabled = true;
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '5%';
                 status.innerHTML = '<span class="spinner"></span> Processing PDF...';
+
                 try {
+                    const scale = parseFloat(scaleSlider.value) || 1.5;
+                    const format = imageFormat.value || 'png';
+                    const mimeType = format === 'png' ? 'image/png' : 
+                                    format === 'jpeg' ? 'image/jpeg' : 'image/webp';
+                    const ext = format === 'jpeg' ? 'jpg' : format;
+
                     const arrayBuffer = await currentFile.arrayBuffer();
                     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    const total = pdf.numPages;
+                    const totalPages = pdf.numPages;
+
+                    progressBar.style.width = '15%';
+                    status.innerHTML = `<span class="spinner"></span> Processing ${totalPages} pages...`;
+
                     const zip = new JSZip();
-                    for (let p=1; p<=total; p++) {
-                        const page = await pdf.getPage(p);
-                        const viewport = page.getViewport({ scale: 1.5 });
+
+                    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                        const page = await pdf.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: scale });
                         const canvas = document.createElement('canvas');
-                        canvas.width = viewport.width; canvas.height = viewport.height;
-                        const ctx = canvas.getContext('2d');
-                        await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-                        zip.file(`page_${p}.png`, blob);
+                        const context = canvas.getContext('2d');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+
+                        await page.render({
+                            canvasContext: context,
+                            viewport: viewport
+                        }).promise;
+
+                        const imageBlob = await new Promise(resolve => {
+                            canvas.toBlob(resolve, mimeType, format === 'jpeg' ? 0.92 : undefined);
+                        });
+
+                        const fileName = `page_${pageNum}.${ext}`;
+                        zip.file(fileName, imageBlob);
+
+                        const pct = 15 + (pageNum / totalPages) * 75;
+                        progressBar.style.width = Math.min(pct, 90) + '%';
+                        status.innerHTML = `<span class="spinner"></span> Page ${pageNum}/${totalPages}...`;
                     }
+
+                    progressBar.style.width = '95%';
+                    status.innerHTML = '<span class="spinner"></span> Creating ZIP archive...';
+
                     const zipBlob = await zip.generateAsync({ type: 'blob' });
                     const zipName = currentFile.name.replace(/\.pdf$/i, '') + '_images.zip';
+
+                    progressBar.style.width = '100%';
                     saveAs(zipBlob, zipName);
-                    status.innerHTML = `✅ Done! ${total} pages · downloaded ${zipName}`;
-                } catch(e) { status.innerHTML = '❌ Error: '+e.message; }
+
+                    status.innerHTML = `✅ Done! ${totalPages} pages · downloaded ${zipName}`;
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        progressBar.style.width = '0%';
+                    }, 1000);
+
+                } catch (error) {
+                    console.error(error);
+                    status.innerHTML = '❌ Error: ' + (error.message || 'Unknown error');
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                }
                 convertBtn.disabled = false;
             });
+
             updateUI();
         })();
 
