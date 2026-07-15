@@ -1,0 +1,5 @@
+User-agent: *
+
+Allow: /
+
+Sitemap: https://easymedia-toolkit.github.io/easymedia/sitemap.xml
