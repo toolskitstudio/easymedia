@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://toolskitstudio.github.io/easymedia/sitemap.xml
