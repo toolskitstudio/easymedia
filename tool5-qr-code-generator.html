@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- ===== FAVICON ===== -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.png">
+    <meta name="msapplication-TileColor" content="#1a5cff">
+    <meta name="theme-color" content="#1a5cff">
+    
+    <title>QR Code Generator - Create Custom QR Codes Free Online</title>
+    <meta name="description" content="Free online QR Code Generator. Create custom QR codes with colors, logos, and different sizes. No uploads, runs locally in your browser. Download as PNG or SVG.">
+    <link rel="canonical" href="https://easymedia.example.com/tool5-qr-code-generator.html">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- QRCode.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',system-ui,sans-serif; }
+        body { background:#f0f4fa; min-height:100vh; display:flex; flex-direction:column; }
+        .wrapper { max-width:1100px; width:100%; margin:0 auto; padding:20px 24px; flex:1; display:flex; flex-direction:column; }
+        .navbar { background:#ffffffdd; backdrop-filter:blur(8px); border-radius:60px; padding:14px 30px; margin-bottom:28px; box-shadow:0 10px 30px rgba(0,20,50,0.08); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; border:1px solid rgba(255,255,255,0.6); }
+        .brand { display:flex; align-items:center; gap:10px; font-size:1.7rem; font-weight:700; color:#0b1f3b; text-decoration:none; }
+        .brand i { background:#1a5cff; color:white; padding:8px 10px; border-radius:40px; font-size:1.2rem; }
+        .brand small { font-weight:400; font-size:0.9rem; color:#3a5f8a; }
+        .badge { font-size:0.85rem; color:#4d6b85; }
+        .badge i { color:#1a5cff; }
+        .back-link { display:inline-flex; align-items:center; gap:8px; background:#eaf1fc; padding:8px 20px; border-radius:40px; text-decoration:none; color:#1a2f4a; font-weight:600; font-size:0.9rem; margin-bottom:20px; width:fit-content; transition:0.2s; }
+        .back-link:hover { background:#dce6f5; }
+        .back-link i { color:#1a5cff; }
+        .page-header { margin-bottom:20px; }
+        .page-header h1 { font-size:1.8rem; color:#0b1f3b; display:flex; align-items:center; gap:12px; }
+        .page-header h1 i { color:#1a5cff; background:#e5efff; padding:12px; border-radius:20px; }
+        .page-header p { color:#4d6b85; margin-top:4px; font-size:1rem; }
+        .tool-card { background:#ffffff; border-radius:32px; padding:24px 28px 28px; box-shadow:0 12px 35px rgba(0,0,0,0.04); border:1px solid #e9effa; max-width:900px; }
+        .tool-body { background:#f7faff; border-radius:24px; padding:18px 20px; }
+        
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-weight:600; color:#1a2f4a; margin-bottom:4px; font-size:0.9rem; }
+        .form-group label i { color:#1a5cff; width:20px; }
+        .form-group input[type="text"], .form-group textarea { width:100%; padding:10px 14px; border-radius:12px; border:1.5px solid #d3e2ed; font-size:0.95rem; transition:0.2s; background:white; }
+        .form-group input[type="text"]:focus, .form-group textarea:focus { border-color:#1a5cff; outline:none; box-shadow:0 0 0 3px rgba(26,92,255,0.1); }
+        .form-group textarea { min-height:80px; resize:vertical; font-family:inherit; }
+        
+        .settings-row { display:flex; flex-wrap:wrap; gap:16px; margin:14px 0; padding:14px 16px; background:#eaf1fc; border-radius:16px; align-items:center; }
+        .settings-row label { display:flex; align-items:center; gap:6px; font-size:0.85rem; color:#1a2f4a; }
+        .settings-row input[type="range"] { width:90px; accent-color:#1a5cff; }
+        .settings-row input[type="color"] { width:40px; height:40px; border-radius:8px; border:1px solid #b9ceec; padding:2px; background:white; cursor:pointer; }
+        .settings-row select { border-radius:30px; border:1px solid #b9ceec; padding:6px 12px; background:white; font-size:0.85rem; }
+        .settings-row .val { background:white; padding:0 10px; border-radius:20px; border:1px solid #b9ceec; font-weight:600; color:#1a5cff; min-width:32px; text-align:center; font-size:0.8rem; }
+        
+        .qr-preview { text-align:center; padding:20px; background:white; border-radius:20px; border:1px solid #d3e2ed; margin:14px 0; }
+        .qr-preview #qrcode { display:inline-block; padding:16px; background:white; border-radius:12px; }
+        .qr-preview #qrcode img, .qr-preview #qrcode canvas { max-width:100%; }
+        .qr-preview .preview-label { font-size:0.8rem; color:#4d6b85; margin-bottom:8px; }
+        
+        .btn { background:white; border:none; padding:10px 24px; border-radius:60px; font-weight:600; font-size:0.9rem; color:#1a2f4a; box-shadow:0 4px 10px rgba(0,20,30,0.08); display:inline-flex; align-items:center; gap:8px; transition:0.2s; cursor:pointer; border:1px solid #c6dbe8; }
+        .btn-primary { background:#1a5cff; border-color:#1a5cff; color:white; box-shadow:0 8px 16px -6px #1a5cff80; }
+        .btn-primary i { color:white; }
+        .btn-primary:hover { background:#0047dd; transform:scale(1.01); }
+        .btn-success { background:#0f9d5e; border-color:#0f9d5e; color:white; }
+        .btn-success:hover { background:#0a7a48; transform:scale(1.01); }
+        .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+        .btn-outline { background:transparent; }
+        .btn-outline:hover { background:#eaf1f7; }
+        .btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
+        .status-box { background:#edf3fc; border-radius:16px; padding:12px 16px; margin-top:12px; min-height:46px; color:#1a3155; font-size:0.9rem; }
+        
+        .logo-upload { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+        .logo-upload input[type="file"] { flex:1; padding:6px; border-radius:30px; border:1px solid #b9ceec; background:white; font-size:0.85rem; }
+        .logo-upload .logo-preview { width:40px; height:40px; border-radius:8px; border:1px solid #d3e2ed; overflow:hidden; display:none; align-items:center; justify-content:center; background:white; }
+        .logo-upload .logo-preview img { max-width:100%; max-height:100%; }
+        .logo-upload .logo-preview.visible { display:flex; }
+        .logo-upload .remove-logo { background:transparent; border:none; color:#b91c1c; cursor:pointer; font-size:1.2rem; display:none; }
+        .logo-upload .remove-logo.visible { display:inline; }
+        
+        .site-footer { margin-top:48px; padding:24px 0 16px; border-top:1px solid #d8e3f5; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; }
+        .site-footer .copyright { color:#6f8bb0; font-size:0.85rem; }
+        .site-footer .footer-links { display:flex; gap:20px; }
+        .site-footer .footer-links a { color:#4d6b85; text-decoration:none; font-size:0.85rem; transition:0.2s; }
+        .site-footer .footer-links a:hover { color:#1a5cff; }
+        .site-footer .footer-badge { display:flex; align-items:center; gap:6px; color:#6f8bb0; font-size:0.8rem; }
+        .site-footer .footer-badge i { color:#1a5cff; }
+        
+        @media (max-width:700px){ .navbar{flex-direction:column;gap:8px;padding:14px 20px;} .tool-card{padding:16px;} .tool-body{padding:12px;} .settings-row{flex-direction:column;align-items:stretch;} .site-footer{flex-direction:column;gap:12px;text-align:center;} .qr-preview #qrcode { padding:8px; } }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <header class="navbar">
+        <a href="index.html" class="brand"><i class="fas fa-wave-square"></i> EasyMedia <small>· free tools</small></a>
+        <div class="badge"><i class="fas fa-shield-alt"></i> 100% offline · no uploads</div>
+    </header>
+
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Tools</a>
+
+    <div class="page-header">
+        <h1><i class="fas fa-qrcode"></i> QR Code Generator</h1>
+        <p>Create custom QR codes with colors, logos, and different sizes</p>
+    </div>
+
+    <div class="tool-card">
+        <div class="tool-body">
+            <!-- Content Input -->
+            <div class="form-group">
+                <label><i class="fas fa-edit"></i> Content / URL</label>
+                <textarea id="qrContent" placeholder="Enter text, URL, or any content you want to encode...">https://easymedia.example.com</textarea>
+            </div>
+
+            <!-- Settings -->
+            <div class="settings-row">
+                <label>Size <input type="range" id="qrSize" min="150" max="500" value="250"> <span class="val" id="sizeVal">250</span></label>
+                <label>Color <input type="color" id="fgColor" value="#1a5cff"></label>
+                <label>BG Color <input type="color" id="bgColor" value="#ffffff"></label>
+                <label>Error Correction 
+                    <select id="errorCorrection">
+                        <option value="L">Low (L)</option>
+                        <option value="M" selected>Medium (M)</option>
+                        <option value="Q">Quartile (Q)</option>
+                        <option value="H">High (H)</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="form-group">
+                <label><i class="fas fa-image"></i> Logo (optional)</label>
+                <div class="logo-upload">
+                    <input type="file" id="logoInput" accept="image/*">
+                    <div class="logo-preview" id="logoPreview"><img id="logoImg" src="#" alt="Logo"></div>
+                    <button class="remove-logo" id="removeLogoBtn">&times;</button>
+                </div>
+            </div>
+
+            <!-- QR Preview -->
+            <div class="qr-preview">
+                <div class="preview-label"><i class="fas fa-eye"></i> Preview</div>
+                <div id="qrcode"></div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="btn-group">
+                <button class="btn btn-primary" id="generateBtn"><i class="fas fa-sync-alt"></i> Generate</button>
+                <button class="btn btn-success" id="downloadPngBtn"><i class="fas fa-download"></i> Download PNG</button>
+                <button class="btn btn-outline" id="downloadSvgBtn"><i class="fas fa-code"></i> Download SVG</button>
+            </div>
+
+            <div class="status-box" id="status5">✅ Enter your content and click Generate</div>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="copyright"><i class="fas fa-copyright"></i> 2026 EasyMedia</div>
+        <div class="footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="footer-badge"><i class="fas fa-shield-alt"></i> 100% offline</div>
+    </footer>
+</div>
+
+<script>
+    (function() {
+        // ===== DOM Elements =====
+        const qrContent = document.getElementById('qrContent');
+        const qrSize = document.getElementById('qrSize');
+        const sizeVal = document.getElementById('sizeVal');
+        const fgColor = document.getElementById('fgColor');
+        const bgColor = document.getElementById('bgColor');
+        const errorCorrection = document.getElementById('errorCorrection');
+        const logoInput = document.getElementById('logoInput');
+        const logoPreview = document.getElementById('logoPreview');
+        const logoImg = document.getElementById('logoImg');
+        const removeLogoBtn = document.getElementById('removeLogoBtn');
+        const qrContainer = document.getElementById('qrcode');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+        const status = document.getElementById('status5');
+
+        let currentQrCode = null;
+        let logoDataUrl = null;
+
+        // ===== Size Slider =====
+        qrSize.addEventListener('input', () => {
+            sizeVal.textContent = qrSize.value;
+        });
+
+        // ===== Logo Upload =====
+        logoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                logoDataUrl = ev.target.result;
+                logoImg.src = logoDataUrl;
+                logoPreview.classList.add('visible');
+                removeLogoBtn.classList.add('visible');
+                generateQR();
+            };
+            reader.readAsDataURL(file);
+        });
+
+        removeLogoBtn.addEventListener('click', function() {
+            logoDataUrl = null;
+            logoInput.value = '';
+            logoPreview.classList.remove('visible');
+            logoImg.src = '#';
+            this.classList.remove('visible');
+            generateQR();
+        });
+
+        // ===== Generate QR Code =====
+        function generateQR() {
+            const content = qrContent.value.trim();
+            if (!content) {
+                status.innerHTML = '⚠️ Please enter some content to encode.';
+                return;
+            }
+
+            const size = parseInt(qrSize.value);
+            const fg = fgColor.value;
+            const bg = bgColor.value;
+            const ecLevel = errorCorrection.value;
+
+            // Clear previous QR
+            qrContainer.innerHTML = '';
+
+            // Get error correction level
+            const ecMap = { 'L': 1, 'M': 0, 'Q': 3, 'H': 2 };
+            const ec = ecMap[ecLevel] || 0;
+
+            try {
+                // Create QR code with options
+                const qrOptions = {
+                    width: size,
+                    height: size,
+                    colorDark: fg,
+                    colorLight: bg,
+                    correctLevel: ec
+                };
+
+                currentQrCode = new QRCode(qrContainer, {
+                    text: content,
+                    width: size,
+                    height: size,
+                    colorDark: fg,
+                    colorLight: bg,
+                    correctLevel: ec
+                });
+
+                // If logo exists, add it after QR is rendered
+                if (logoDataUrl) {
+                    setTimeout(() => {
+                        addLogoToQR(logoDataUrl);
+                    }, 100);
+                }
+
+                status.innerHTML = `✅ QR Code generated successfully! (${content.length} characters)`;
+                downloadPngBtn.disabled = false;
+                downloadSvgBtn.disabled = false;
+
+            } catch (error) {
+                status.innerHTML = '❌ Error: ' + error.message;
+                console.error(error);
+            }
+        }
+
+        // ===== Add Logo to QR =====
+        function addLogoToQR(logoUrl) {
+            const canvas = qrContainer.querySelector('canvas');
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const size = canvas.width;
+
+            // Load logo image
+            const img = new Image();
+            img.onload = function() {
+                // Calculate logo size (20% of QR code)
+                const logoSize = size * 0.20;
+                const x = (size - logoSize) / 2;
+                const y = (size - logoSize) / 2;
+
+                // Draw white background for logo
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                const radius = 8;
+                const rx = x - 4;
+                const ry = y - 4;
+                const rw = logoSize + 8;
+                const rh = logoSize + 8;
+                ctx.moveTo(rx + radius, ry);
+                ctx.lineTo(rx + rw - radius, ry);
+                ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
+                ctx.lineTo(rx + rw, ry + rh - radius);
+                ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
+                ctx.lineTo(rx + radius, ry + rh);
+                ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
+                ctx.lineTo(rx, ry + radius);
+                ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw logo
+                ctx.drawImage(img, x, y, logoSize, logoSize);
+            };
+            img.src = logoUrl;
+        }
+
+        // ===== Download PNG =====
+        function downloadPNG() {
+            const canvas = qrContainer.querySelector('canvas');
+            if (!canvas) {
+                status.innerHTML = '⚠️ Please generate a QR code first.';
+                return;
+            }
+
+            try {
+                // If logo was added, canvas already has it
+                const link = document.createElement('a');
+                link.download = 'qrcode.png';
+                link.href = canvas.toDataURL('image/png');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                status.innerHTML = '✅ PNG downloaded successfully!';
+            } catch (error) {
+                status.innerHTML = '❌ Error downloading PNG: ' + error.message;
+            }
+        }
+
+        // ===== Download SVG =====
+        function downloadSVG() {
+            const canvas = qrContainer.querySelector('canvas');
+            if (!canvas) {
+                status.innerHTML = '⚠️ Please generate a QR code first.';
+                return;
+            }
+
+            try {
+                // Get QR data from canvas
+                const size = canvas.width;
+                const fg = fgColor.value;
+                const bg = bgColor.value;
+                const content = qrContent.value.trim();
+
+                // Simple SVG generation - recreates QR
+                // For full SVG support, we use a different approach
+                // This creates SVG with embedded QR data
+                const svgData = qrContainer.querySelector('canvas').toDataURL('image/png');
+                
+                // Create SVG with embedded PNG (for simplicity)
+                const svg = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+                        <image href="${svgData}" width="${size}" height="${size}"/>
+                    </svg>
+                `;
+
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = 'qrcode.svg';
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                status.innerHTML = '✅ SVG downloaded successfully!';
+            } catch (error) {
+                status.innerHTML = '❌ Error downloading SVG: ' + error.message;
+            }
+        }
+
+        // ===== Auto-generate on change =====
+        qrContent.addEventListener('input', generateQR);
+        qrSize.addEventListener('change', generateQR);
+        fgColor.addEventListener('input', generateQR);
+        bgColor.addEventListener('input', generateQR);
+        errorCorrection.addEventListener('change', generateQR);
+
+        // ===== Buttons =====
+        generateBtn.addEventListener('click', generateQR);
+        downloadPngBtn.addEventListener('click', downloadPNG);
+        downloadSvgBtn.addEventListener('click', downloadSVG);
+
+        // ===== Initial generation =====
+        setTimeout(generateQR, 300);
+
+        // ===== Enter key support =====
+        qrContent.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                generateQR();
+            }
+        });
+
+    })();
+</script>
+</body>
+</html>
