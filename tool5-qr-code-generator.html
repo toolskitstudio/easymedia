@@ -13,8 +13,8 @@
     <meta name="theme-color" content="#1a5cff">
     
     <title>QR Code Generator - Create Custom QR Codes Free Online</title>
-    <meta name="description" content="Free online QR Code Generator. Create custom QR codes with colors, logos, and different sizes. No uploads, runs locally in your browser. Download as PNG or SVG.">
-    <link rel="canonical" href="https://easymedia.example.com/tool5-qr-code-generator.html">
+    <meta name="description" content="Free online QR Code Generator. Create custom QR codes with colors and different sizes. No uploads, runs locally in your browser. Download as JPG or SVG.">
+    <link rel="canonical" href="https://easymedia-toolkit.github.io/easymedia/tool5-qr-code-generator.html">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- QRCode.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -52,7 +52,9 @@
         .settings-row select { border-radius:30px; border:1px solid #b9ceec; padding:6px 12px; background:white; font-size:0.85rem; }
         .settings-row .val { background:white; padding:0 10px; border-radius:20px; border:1px solid #b9ceec; font-weight:600; color:#1a5cff; min-width:32px; text-align:center; font-size:0.8rem; }
         
-        .qr-preview { text-align:center; padding:20px; background:white; border-radius:20px; border:1px solid #d3e2ed; margin:14px 0; }
+        .qr-preview { text-align:center; padding:20px; background:white; border-radius:20px; border:1px solid #d3e2ed; margin:14px 0; min-height:200px; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+        .qr-preview .placeholder { color:#94a3b8; font-size:0.95rem; }
+        .qr-preview .placeholder i { font-size:3rem; display:block; margin-bottom:10px; opacity:0.4; }
         .qr-preview #qrcode { display:inline-block; padding:16px; background:white; border-radius:12px; }
         .qr-preview #qrcode img, .qr-preview #qrcode canvas { max-width:100%; }
         .qr-preview .preview-label { font-size:0.8rem; color:#4d6b85; margin-bottom:8px; }
@@ -68,14 +70,6 @@
         .btn-outline:hover { background:#eaf1f7; }
         .btn-group { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
         .status-box { background:#edf3fc; border-radius:16px; padding:12px 16px; margin-top:12px; min-height:46px; color:#1a3155; font-size:0.9rem; }
-        
-        .logo-upload { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
-        .logo-upload input[type="file"] { flex:1; padding:6px; border-radius:30px; border:1px solid #b9ceec; background:white; font-size:0.85rem; }
-        .logo-upload .logo-preview { width:40px; height:40px; border-radius:8px; border:1px solid #d3e2ed; overflow:hidden; display:none; align-items:center; justify-content:center; background:white; }
-        .logo-upload .logo-preview img { max-width:100%; max-height:100%; }
-        .logo-upload .logo-preview.visible { display:flex; }
-        .logo-upload .remove-logo { background:transparent; border:none; color:#b91c1c; cursor:pointer; font-size:1.2rem; display:none; }
-        .logo-upload .remove-logo.visible { display:inline; }
         
         .site-footer { margin-top:48px; padding:24px 0 16px; border-top:1px solid #d8e3f5; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; }
         .site-footer .copyright { color:#6f8bb0; font-size:0.85rem; }
@@ -99,7 +93,7 @@
 
     <div class="page-header">
         <h1><i class="fas fa-qrcode"></i> QR Code Generator</h1>
-        <p>Create custom QR codes with colors, logos, and different sizes</p>
+        <p>Create custom QR codes with colors and different sizes. Download as JPG or SVG.</p>
     </div>
 
     <div class="tool-card">
@@ -107,7 +101,7 @@
             <!-- Content Input -->
             <div class="form-group">
                 <label><i class="fas fa-edit"></i> Content / URL</label>
-                <textarea id="qrContent" placeholder="Enter text, URL, or any content you want to encode...">https://easymedia.example.com</textarea>
+                <textarea id="qrContent" placeholder="Enter text, URL, or any content you want to encode..."></textarea>
             </div>
 
             <!-- Settings -->
@@ -125,30 +119,24 @@
                 </label>
             </div>
 
-            <!-- Logo Upload -->
-            <div class="form-group">
-                <label><i class="fas fa-image"></i> Logo (optional)</label>
-                <div class="logo-upload">
-                    <input type="file" id="logoInput" accept="image/*">
-                    <div class="logo-preview" id="logoPreview"><img id="logoImg" src="#" alt="Logo"></div>
-                    <button class="remove-logo" id="removeLogoBtn">&times;</button>
-                </div>
-            </div>
-
             <!-- QR Preview -->
-            <div class="qr-preview">
-                <div class="preview-label"><i class="fas fa-eye"></i> Preview</div>
-                <div id="qrcode"></div>
+            <div class="qr-preview" id="qrPreview">
+                <div class="placeholder" id="placeholder">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Click "Generate QR Code" to create your QR code</span>
+                </div>
+                <div class="preview-label" id="previewLabel" style="display:none;"><i class="fas fa-eye"></i> Preview</div>
+                <div id="qrcode" style="display:none;"></div>
             </div>
 
             <!-- Buttons -->
             <div class="btn-group">
-                <button class="btn btn-primary" id="generateBtn"><i class="fas fa-sync-alt"></i> Generate</button>
-                <button class="btn btn-success" id="downloadPngBtn"><i class="fas fa-download"></i> Download PNG</button>
-                <button class="btn btn-outline" id="downloadSvgBtn"><i class="fas fa-code"></i> Download SVG</button>
+                <button class="btn btn-primary" id="generateBtn"><i class="fas fa-sync-alt"></i> Generate QR Code</button>
+                <button class="btn btn-success" id="downloadJpgBtn" disabled><i class="fas fa-download"></i> Download JPG</button>
+                <button class="btn btn-outline" id="downloadSvgBtn" disabled><i class="fas fa-code"></i> Download SVG</button>
             </div>
 
-            <div class="status-box" id="status5">✅ Enter your content and click Generate</div>
+            <div class="status-box" id="status5">📝 Enter your content and click "Generate QR Code"</div>
         </div>
     </div>
 
@@ -172,46 +160,20 @@
         const fgColor = document.getElementById('fgColor');
         const bgColor = document.getElementById('bgColor');
         const errorCorrection = document.getElementById('errorCorrection');
-        const logoInput = document.getElementById('logoInput');
-        const logoPreview = document.getElementById('logoPreview');
-        const logoImg = document.getElementById('logoImg');
-        const removeLogoBtn = document.getElementById('removeLogoBtn');
         const qrContainer = document.getElementById('qrcode');
+        const placeholder = document.getElementById('placeholder');
+        const previewLabel = document.getElementById('previewLabel');
         const generateBtn = document.getElementById('generateBtn');
-        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        const downloadJpgBtn = document.getElementById('downloadJpgBtn');
         const downloadSvgBtn = document.getElementById('downloadSvgBtn');
         const status = document.getElementById('status5');
 
         let currentQrCode = null;
-        let logoDataUrl = null;
+        let isGenerated = false;
 
         // ===== Size Slider =====
         qrSize.addEventListener('input', () => {
             sizeVal.textContent = qrSize.value;
-        });
-
-        // ===== Logo Upload =====
-        logoInput.addEventListener('change', function(e) {
-            const file = this.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(ev) {
-                logoDataUrl = ev.target.result;
-                logoImg.src = logoDataUrl;
-                logoPreview.classList.add('visible');
-                removeLogoBtn.classList.add('visible');
-                generateQR();
-            };
-            reader.readAsDataURL(file);
-        });
-
-        removeLogoBtn.addEventListener('click', function() {
-            logoDataUrl = null;
-            logoInput.value = '';
-            logoPreview.classList.remove('visible');
-            logoImg.src = '#';
-            this.classList.remove('visible');
-            generateQR();
         });
 
         // ===== Generate QR Code =====
@@ -227,6 +189,11 @@
             const bg = bgColor.value;
             const ecLevel = errorCorrection.value;
 
+            // Show QR container, hide placeholder
+            placeholder.style.display = 'none';
+            previewLabel.style.display = 'block';
+            qrContainer.style.display = 'inline-block';
+
             // Clear previous QR
             qrContainer.innerHTML = '';
 
@@ -236,14 +203,6 @@
 
             try {
                 // Create QR code with options
-                const qrOptions = {
-                    width: size,
-                    height: size,
-                    colorDark: fg,
-                    colorLight: bg,
-                    correctLevel: ec
-                };
-
                 currentQrCode = new QRCode(qrContainer, {
                     text: content,
                     width: size,
@@ -253,16 +212,10 @@
                     correctLevel: ec
                 });
 
-                // If logo exists, add it after QR is rendered
-                if (logoDataUrl) {
-                    setTimeout(() => {
-                        addLogoToQR(logoDataUrl);
-                    }, 100);
-                }
-
-                status.innerHTML = `✅ QR Code generated successfully! (${content.length} characters)`;
-                downloadPngBtn.disabled = false;
+                isGenerated = true;
+                downloadJpgBtn.disabled = false;
                 downloadSvgBtn.disabled = false;
+                status.innerHTML = `✅ QR Code generated successfully! (${content.length} characters)`;
 
             } catch (error) {
                 status.innerHTML = '❌ Error: ' + error.message;
@@ -270,50 +223,8 @@
             }
         }
 
-        // ===== Add Logo to QR =====
-        function addLogoToQR(logoUrl) {
-            const canvas = qrContainer.querySelector('canvas');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const size = canvas.width;
-
-            // Load logo image
-            const img = new Image();
-            img.onload = function() {
-                // Calculate logo size (20% of QR code)
-                const logoSize = size * 0.20;
-                const x = (size - logoSize) / 2;
-                const y = (size - logoSize) / 2;
-
-                // Draw white background for logo
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath();
-                const radius = 8;
-                const rx = x - 4;
-                const ry = y - 4;
-                const rw = logoSize + 8;
-                const rh = logoSize + 8;
-                ctx.moveTo(rx + radius, ry);
-                ctx.lineTo(rx + rw - radius, ry);
-                ctx.quadraticCurveTo(rx + rw, ry, rx + rw, ry + radius);
-                ctx.lineTo(rx + rw, ry + rh - radius);
-                ctx.quadraticCurveTo(rx + rw, ry + rh, rx + rw - radius, ry + rh);
-                ctx.lineTo(rx + radius, ry + rh);
-                ctx.quadraticCurveTo(rx, ry + rh, rx, ry + rh - radius);
-                ctx.lineTo(rx, ry + radius);
-                ctx.quadraticCurveTo(rx, ry, rx + radius, ry);
-                ctx.closePath();
-                ctx.fill();
-
-                // Draw logo
-                ctx.drawImage(img, x, y, logoSize, logoSize);
-            };
-            img.src = logoUrl;
-        }
-
-        // ===== Download PNG =====
-        function downloadPNG() {
+        // ===== Download JPG (با کیفیت بالا) =====
+        function downloadJPG() {
             const canvas = qrContainer.querySelector('canvas');
             if (!canvas) {
                 status.innerHTML = '⚠️ Please generate a QR code first.';
@@ -321,16 +232,29 @@
             }
 
             try {
-                // If logo was added, canvas already has it
+                // ایجاد یک کپی از canvas با پس‌زمینه سفید برای JPG
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const ctx = tempCanvas.getContext('2d');
+                
+                // پس‌زمینه سفید
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                
+                // رسم QR code روی آن
+                ctx.drawImage(canvas, 0, 0);
+                
+                // تبدیل به JPG با کیفیت ۹۲٪
                 const link = document.createElement('a');
-                link.download = 'qrcode.png';
-                link.href = canvas.toDataURL('image/png');
+                link.download = 'qrcode.jpg';
+                link.href = tempCanvas.toDataURL('image/jpeg', 0.92);
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                status.innerHTML = '✅ PNG downloaded successfully!';
+                status.innerHTML = '✅ JPG downloaded successfully!';
             } catch (error) {
-                status.innerHTML = '❌ Error downloading PNG: ' + error.message;
+                status.innerHTML = '❌ Error downloading JPG: ' + error.message;
             }
         }
 
@@ -343,18 +267,9 @@
             }
 
             try {
-                // Get QR data from canvas
                 const size = canvas.width;
-                const fg = fgColor.value;
-                const bg = bgColor.value;
-                const content = qrContent.value.trim();
-
-                // Simple SVG generation - recreates QR
-                // For full SVG support, we use a different approach
-                // This creates SVG with embedded QR data
-                const svgData = qrContainer.querySelector('canvas').toDataURL('image/png');
+                const svgData = canvas.toDataURL('image/png');
                 
-                // Create SVG with embedded PNG (for simplicity)
                 const svg = `
                     <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
                         <image href="${svgData}" width="${size}" height="${size}"/>
@@ -376,20 +291,12 @@
             }
         }
 
-        // ===== Auto-generate on change =====
-        qrContent.addEventListener('input', generateQR);
-        qrSize.addEventListener('change', generateQR);
-        fgColor.addEventListener('input', generateQR);
-        bgColor.addEventListener('input', generateQR);
-        errorCorrection.addEventListener('change', generateQR);
-
-        // ===== Buttons =====
+        // ===== Manual Generate Button =====
         generateBtn.addEventListener('click', generateQR);
-        downloadPngBtn.addEventListener('click', downloadPNG);
-        downloadSvgBtn.addEventListener('click', downloadSVG);
 
-        // ===== Initial generation =====
-        setTimeout(generateQR, 300);
+        // ===== Download Buttons =====
+        downloadJpgBtn.addEventListener('click', downloadJPG);
+        downloadSvgBtn.addEventListener('click', downloadSVG);
 
         // ===== Enter key support =====
         qrContent.addEventListener('keydown', function(e) {
@@ -398,6 +305,26 @@
                 generateQR();
             }
         });
+
+        // ===== Auto-generate on setting changes ONLY if already generated =====
+        qrSize.addEventListener('change', function() {
+            if (isGenerated) generateQR();
+        });
+        fgColor.addEventListener('input', function() {
+            if (isGenerated) generateQR();
+        });
+        bgColor.addEventListener('input', function() {
+            if (isGenerated) generateQR();
+        });
+        errorCorrection.addEventListener('change', function() {
+            if (isGenerated) generateQR();
+        });
+
+        // ===== Initial state - no auto generation =====
+        status.innerHTML = '📝 Enter your content and click "Generate QR Code"';
+        downloadJpgBtn.disabled = true;
+        downloadSvgBtn.disabled = true;
+        isGenerated = false;
 
     })();
 </script>
